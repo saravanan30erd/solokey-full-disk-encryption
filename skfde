@@ -1,0 +1,12 @@
+#!/usr/bin/ash
+
+message() {
+  echo "$@" >&2
+  return 0
+}
+
+run_hook() {
+  message " > Please provide the challenge."
+  _skfde_response="$(solo ls)"
+  message " Received Response: '$_skfde_response'"
+}
