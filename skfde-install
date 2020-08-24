@@ -25,8 +25,7 @@ build() {
   # cryptsetup calls pthread_create(), which dlopen()s libgcc_s.so.1
   add_binary "/usr/lib/libgcc_s.so.1"
 
-  add_binary "python"
-  add_binary "solo"
+  add_binary "fido2luks"
 
   add_runscript
 }
