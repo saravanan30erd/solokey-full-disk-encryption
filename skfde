@@ -7,6 +7,6 @@ message() {
 
 run_hook() {
   message " > Please provide the challenge."
-  _skfde_response="$(solo ls)"
+  _skfde_response="$(fido2luks print-secret --pin)"
   message " Received Response: '$_skfde_response'"
 }
