@@ -10,7 +10,26 @@ message() {
 }
 
 run_hook() {
-  message " > Please provide the challenge."
+
+  . "$SKFDE_CONFIG_FILE" || {
+    message "Failed to read the SKFDE configuration file '$SKFDE_CONFIG_FILE'"
+    return 1
+  }
+
+  message " Generate the solokey response"
   _skfde_response="$(fido2luks print-secret --pin)"
   message " Received Response: '$_skfde_response'"
+
+  message " Passing '$_skfde_response' to cryptsetup"
+  _tmp="$(printf %s "$_ykfde_response" | cryptsetup luksOpen "$SKFDE_LUKS_DEV" "$SKFDE_LUKS_NAME" 2>&1)"
+  _rc=$?
+
+ if [ "$_rc" -eq 0 ]; then
+   message " Decryption was successful."
+   sleep "$SKFDE_SLEEP_AFTER_SUCCESSFUL_CRYPTSETUP"
+   return 0
+ else
+   message " FAILED! [$_rc] $_tmp"
+   return 1
+ fi
 }
