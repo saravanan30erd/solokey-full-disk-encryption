@@ -26,6 +26,9 @@ build() {
   add_binary "/usr/lib/libgcc_s.so.1"
 
   add_binary "fido2luks"
+  add_binary "printf"
+  add_binary "sleep"
+  add_file "/etc/skfde.conf" "/etc/skfde.conf"
 
   add_runscript
 }

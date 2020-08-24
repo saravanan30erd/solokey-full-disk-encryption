@@ -1,5 +1,9 @@
 #!/usr/bin/ash
 
+
+SKFDE_CONFIG_FILE="/etc/skfde.conf"
+
+
 message() {
   echo "$@" >&2
   return 0
