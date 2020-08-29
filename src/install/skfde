@@ -1,13 +1,6 @@
 #!/bin/bash
 
-SKFDE_CONFIG_FILE="/etc/skfde.conf"
-
 build() {
-
-  . "$SKFDE_CONFIG_FILE" || {
-    message "Failed to read the SKFDE configuration file '$SKFDE_CONFIG_FILE'"
-    return 1
-  }
 
   local mod
 
@@ -41,6 +34,6 @@ build() {
 
 help() {
   cat <<HELPEOF
-This allows decrypting a custom device.
+This allows decrypting a partition using SoloKey.
 HELPEOF
 }
