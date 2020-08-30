@@ -12,7 +12,7 @@ message() {
 
 skfde_open() {
   message "Generate the solokey response"
-  read -ps 'Enter the SoloKey PIN: ' PIN
+  read -s -p 'Enter the SoloKey PIN: ' PIN
 
   _skfde_response="$(fido2luks print-secret $SKFDE_CREDENTIAL \
     --salt string:$SKFDE_CHALLENGE --pin --pin-input $PIN 2>&1)"
