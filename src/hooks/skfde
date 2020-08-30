@@ -14,12 +14,12 @@ skfde_open() {
   message "Generate the solokey response"
   read -ps 'Enter the SoloKey PIN: ' PIN
 
-  _skfde_response="$(fido2luks print-secret $SKFDE_CREDENTIAL
+  _skfde_response="$(fido2luks print-secret $SKFDE_CREDENTIAL \
     --salt string:$SKFDE_CHALLENGE --pin --pin-input $PIN 2>&1)"
   message "Received Response: '$_skfde_response'"
 
   message "Passing '$_skfde_response' to cryptsetup"
-  _tmp="$(printf %s "$_skfde_response" | cryptsetup luksOpen
+  _tmp="$(printf %s "$_skfde_response" | cryptsetup luksOpen \
     /dev/disk/by-uuid/$SKFDE_LUKS_DEV $SKFDE_LUKS_NAME 2>&1)"
   _rc=$?
 
