@@ -4,6 +4,7 @@
 SKFDE_CONFIG_FILE="/etc/skfde.conf"
 SKFDE_SLEEP_AFTER_SUCCESSFUL_CRYPTSETUP="5"
 SKFDE_CRYPTSETUP_RETRY="3"
+SKFDE_PIN_SOURCE="pin.txt"
 
 message() {
   echo "$@" >&2
@@ -14,9 +15,11 @@ skfde_open() {
   message "Generate the solokey response"
   read -s -p 'Enter the SoloKey PIN: ' PIN
 
+  echo -n $PIN > $SKFDE_PIN_SOURCE
   _skfde_response="$(printf $PIN | fido2luks print-secret $SKFDE_CREDENTIAL \
-    --salt string:$SKFDE_CHALLENGE --pin --pin-source /dev/stdin 2>&1)"
+    --salt string:$SKFDE_CHALLENGE --pin --pin-source $SKFDE_PIN_SOURCE 2>&1)"
   message "Received Response: '$_skfde_response'"
+  rm -f $SKFDE_PIN_SOURCE
 
   message "Passing '$_skfde_response' to cryptsetup"
   _tmp="$(printf %s "$_skfde_response" | cryptsetup luksOpen \
