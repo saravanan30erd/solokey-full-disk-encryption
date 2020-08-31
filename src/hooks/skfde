@@ -35,7 +35,7 @@ skfde_open() {
   rm -f $SKFDE_PIN_SOURCE
   if [ "$_response" -eq 0 ]; then
     message "Received Response: '$_skfde_response'"
-  else:
+  else
     message "SoloKey Challenge-Response failed"
   fi
 
