@@ -13,10 +13,22 @@ message() {
 }
 
 skfde_open() {
-  message "Generate the solokey response"
+
+  # check if SoloKey authenticator is connected
+  _key_connected="$(fido2luks connected 2>&1)"
+  _connected=$?
+  if [ "_connected" -eq 0 ]; then
+    message "SoloKey Found"
+  else
+    message "SoloKey Not Found"
+    return 1
+  fi
+
   read -s -p 'Enter the SoloKey PIN: ' PIN
 
   echo -n $PIN > $SKFDE_PIN_SOURCE
+  message "Generate the solokey response"
+  message "PRESS THE SOLOKEY BUTTON"
   _skfde_response="$(printf $PIN | fido2luks print-secret $SKFDE_CREDENTIAL \
     --salt string:$SKFDE_CHALLENGE --pin --pin-source $SKFDE_PIN_SOURCE 2>&1)"
   message "Received Response: '$_skfde_response'"
@@ -29,7 +41,7 @@ skfde_open() {
   _rc=$?
 
  if [ "$_rc" -eq 0 ]; then
-   message "Decryption was successful."
+   message "Decryption was successful"
    sleep "$SKFDE_SLEEP_AFTER_SUCCESSFUL_CRYPTSETUP"
    return 0
  else
