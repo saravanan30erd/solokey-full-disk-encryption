@@ -5,6 +5,7 @@ SKFDE_CONFIG_FILE="/etc/skfde.conf"
 SKFDE_SLEEP_AFTER_SUCCESSFUL_CRYPTSETUP="5"
 SKFDE_CRYPTSETUP_RETRY="3"
 SKFDE_PIN_SOURCE="pin.txt"
+SKFDE_LUKS_KEYSLOT="3"
 
 message() {
   echo "$@" >&2
@@ -23,6 +24,7 @@ skfde_open() {
 
   message "Passing '$_skfde_response' to cryptsetup"
   _tmp="$(printf %s "$_skfde_response" | cryptsetup luksOpen \
+    --key-slot=$SKFDE_LUKS_KEYSLOT \
     /dev/disk/by-uuid/$SKFDE_LUKS_DEV $SKFDE_LUKS_NAME 2>&1)"
   _rc=$?
 
@@ -45,11 +47,12 @@ run_hook() {
   }
 
   # sanity check
-  echo "solokey credential: $SKFDE_CREDENTIAL"
   if [ -z "$SKFDE_LUKS_DEV" ]; then
     message "Please check SKFDE_LUKS_DEV in $SKFDE_CONFIG_FILE"
+    return 1
   elif [ -z "$SKFDE_CHALLENGE" ] || [ -z "$SKFDE_CREDENTIAL" ]; then
     message "Please set SoloKey challenge & credential in $SKFDE_CONFIG_FILE"
+    return 1
   fi
 
   # add dm-crypt kernel module
