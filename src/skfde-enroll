@@ -3,11 +3,64 @@
 set -euxo pipefail
 
 SKFDE_CONFIG_FILE="/etc/skfde.conf"
-SKFDE_LUKS_KEYSLOT="3"
+SKFDE_DEFAULT_LUKS_KEYSLOT="3"
+SKFDE_LUKS_DEV=""
 
 if [ -r "$SKFDE_CONFIG_FILE" ]; then
   . "$SKFDE_CONFIG_FILE"
 else
   echo "Failed to read the SKFDE configuration file '$SKFDE_CONFIG_FILE'"
   exit 1
+fi
+
+while getopts ":d:s:h" opt; do
+  case "$opt" in
+    d)
+      SKFDE_LUKS_DEV="$OPTARG"
+      printf '%s\n' "INFO: Setting device to '$OPTARG'."
+      ;;
+    s)
+      if [ "$OPTARG" -gt -8 ] && [ "$OPTARG" -lt 8 ]; then
+        SKFDE_LUKS_KEYSLOT="$OPTARG"
+        printf '%s\n' "INFO: Setting LUKS keyslot to '$OPTARG'."
+      else
+        printf '%s\n' "ERROR: Chosen LUKS keyslot '$OPTARG' is invalid. Please choose valid LUKS keyslot number between '0-7'."
+        exit 1
+      fi
+      ;;
+    h)
+      echo
+      echo " -d <device>   : select an existing device"
+      echo " -s <slot>     : select the LUKS keyslot"
+      exit 0
+      ;;
+    \?)
+      printf '%s\n' "ERROR: Invalid option: '$OPTARG'" >&2
+      echo
+      echo " -d <device>   : select an existing device"
+      echo " -s <slot>     : select the LUKS keyslot"
+      exit 1
+      ;;
+  esac
+done
+
+if [ -z "$SKFDE_LUKS_DEV" ]; then
+  echo "ERROR: Device not selected. Please select an existing device using '-d' option."
+  exit 1
+elif [ ! -e "$SKFDE_LUKS_DEV" ]; then
+  printf '%s\n' "ERROR: Selected device '$SKFDE_LUKS_DEV' doesn't exist."
+  exit 1
+elif [ ! -r "$SKFDE_LUKS_DEV" ] || [ ! -w "$SKFDE_LUKS_DEV" ]; then
+  printf '%s\n' "ERROR: Selected device '$SKFDE_LUKS_DEV' isn't accessible for current user '$(whoami)'. Please execute this script as 'root'."
+  exit 1
+fi
+
+if ! cryptsetup isLuks "$SKFDE_LUKS_DEV"; then
+  printf '%s\n' "ERROR: Selected device '$SKFDE_LUKS_DEV' isn't a LUKS encrypted volume. Please select a valid device."
+  exit 1
+fi
+
+if [ -z "$SKFDE_LUKS_KEYSLOT" ]; then
+  SKFDE_LUKS_KEYSLOT=$SKFDE_DEFAULT_LUKS_KEYSLOT
+  echo "INFO: LUKS keyslot not selected, using default LUKS keyslot."
 fi
