@@ -5,6 +5,7 @@ set -euxo pipefail
 SKFDE_CONFIG_FILE="/etc/skfde.conf"
 SKFDE_DEFAULT_LUKS_KEYSLOT="3"
 SKFDE_LUKS_DEV=""
+SKFDE_RESPONSE=""
 
 if [ -r "$SKFDE_CONFIG_FILE" ]; then
   . "$SKFDE_CONFIG_FILE"
@@ -63,4 +64,36 @@ fi
 if [ -z "$SKFDE_LUKS_KEYSLOT" ]; then
   SKFDE_LUKS_KEYSLOT=$SKFDE_DEFAULT_LUKS_KEYSLOT
   echo "INFO: LUKS keyslot not selected, using default LUKS keyslot."
+fi
+
+printf '%s\n' "INFO: This script will utilize LUKS keyslot '$SKFDE_LUKS_KEYSLOT' on device '$SKFDE_LUKS_DEV'."
+
+if [ -z "$SKFDE_CHALLENGE" ]; then
+  echo "ERROR: solokey challenge is empty. Check the $SKFDE_CONFIG_FILE file."
+  exit 1
+fi
+
+if [ -z "$SKFDE_CREDENTIAL" ]; then
+  echo "ERROR: solokey credential is empty. Check the $SKFDE_CONFIG_FILE file."
+  exit 1
+fi
+
+if [ -z "$SKFDE_RESPONSE" ]; then
+  read -s -p "Enter the SoloKey PIN: " PIN
+  echo "Remember to press the SoloKey button if necessary"
+  SKFDE_RESPONSE="$(printf $PIN | fido2luks print-secret $SKFDE_CREDENTIAL \
+    --salt string:$SKFDE_CHALLENGE --pin --pin-source /dev/stdin 2>&1)"
+  SKFDE_PASSPHRASE="$SKFDE_RESPONSE"
+fi
+
+echo "Please provide the LUKS passphrase for the existing keyslot."
+read -s -p "Enter existing passphrase: " SKFDE_OLD_PASSPHRASE
+
+if [ "$SKFDE_PASSPHRASE" ]; then
+  printf '%s\n' " > Adding solokey LUKS passphrase with cryptsetup..."
+  printf '%s\n' "$SKFDE_OLD_PASSPHRASE" "$SKFDE_PASSPHRASE" "$SKFDE_PASSPHRASE" | cryptsetup --key-slot="$SKFDE_LUKS_KEYSLOT" luksAddKey "$SKFDE_LUKS_DEV" 2>&1
+  printf '%s\n' "   New solokey passphrase successfully added"
+else
+  echo "ERROR: solokey passphrase is empty"
+  exit 1
 fi
