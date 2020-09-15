@@ -91,9 +91,9 @@ echo "Please provide the LUKS passphrase for the existing keyslot."
 read -s -p "Enter existing passphrase: " SKFDE_OLD_PASSPHRASE
 
 if [ "$SKFDE_PASSPHRASE" ]; then
-  printf '%s\n' " > Adding solokey LUKS passphrase with cryptsetup..."
+  printf '%s\n' " Adding solokey LUKS passphrase with cryptsetup..."
   printf '%s\n' "$SKFDE_OLD_PASSPHRASE" "$SKFDE_PASSPHRASE" "$SKFDE_PASSPHRASE" | cryptsetup --key-slot="$SKFDE_LUKS_KEYSLOT" luksAddKey "$SKFDE_LUKS_DEV" 2>&1
-  printf '%s\n' "   New solokey passphrase successfully added"
+  printf '%s\n' " New solokey passphrase successfully added"
   exit 0
 else
   echo "ERROR: solokey passphrase is empty"

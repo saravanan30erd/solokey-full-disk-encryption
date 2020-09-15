@@ -104,3 +104,15 @@ if [ -z "$SKFDE_RESPONSE" ]; then
     --salt string:$SKFDE_CHALLENGE --pin --pin-source /dev/stdin 2>&1)"
   SKFDE_PASSPHRASE="$SKFDE_RESPONSE"
 fi
+
+if [ "$SKFDE_TEST_PASSPHRASE" ]; then
+  printf '%s\n' " Passing '$SKFDE_PASSPHRASE' to 'cryptsetup'"
+  printf '%s\n' "$SKFDE_PASSPHRASE" | cryptsetup luksOpen "$SKFDE_TEST_PASSPHRASE" "$SKFDE_LUKS_DEV" "$SKFDE_LUKS_KEYSLOT" "$*" 2>&1
+  printf '%s\n' " Device successfully opened"
+  exit 0
+else
+  printf '%s\n' " Passing '$SKFDE_PASSPHRASE' to 'cryptsetup'"
+  printf '%s\n' "$SKFDE_PASSPHRASE" | cryptsetup luksOpen "$SKFDE_LUKS_DEV" "$SKFDE_LUKS_KEYSLOT" "$*" 2>&1
+  printf '%s\n' " Device successfully opened as /dev/mapper/$SKFDE_LUKS_NAME"
+  exit 0
+fi
