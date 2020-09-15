@@ -15,7 +15,7 @@ else
   exit 1
 fi
 
-while getopts ":d:s:h" opt; do
+while getopts ":d:s:n:th" opt; do
   case "$opt" in
     d)
       SKFDE_LUKS_DEV="$OPTARG"
@@ -30,17 +30,33 @@ while getopts ":d:s:h" opt; do
         exit 1
       fi
       ;;
+    n)
+      SKFDE_LUKS_NAME="$OPTARG"
+      printf '%s\n' "INFO: Setting name to '$OPTARG'."
+      ;;
+    t)
+      SKFDE_TEST_PASSPHRASE="--test-passphrase"
+      echo "INFO: Testing LUKS passphrase"
+      ;;
     h)
       echo
-      echo " -d <device>   : select an existing device"
-      echo " -s <slot>     : select the LUKS keyslot"
+      echo " -d <device>     : select an existing device"
+      echo " -s <slot>       : select the LUKS keyslot"
+      echo " -n <name>       : set the new encrypted volume name"
+      echo " -t              : test LUKS passphrase"
+      echo " [ -- --params ] : pass optional cryptsetup luksOpen parameters"
+      echo
       exit 0
       ;;
     \?)
       printf '%s\n' "ERROR: Invalid option: '$OPTARG'" >&2
       echo
-      echo " -d <device>   : select an existing device"
-      echo " -s <slot>     : select the LUKS keyslot"
+      echo " -d <device>     : select an existing device"
+      echo " -s <slot>       : select the LUKS keyslot"
+      echo " -n <name>       : set the new encrypted volume name"
+      echo " -t              : test LUKS passphrase"
+      echo " [ -- --params ] : pass optional cryptsetup luksOpen parameters"
+      echo
       exit 1
       ;;
   esac
@@ -62,12 +78,14 @@ if ! cryptsetup isLuks "$SKFDE_LUKS_DEV"; then
   exit 1
 fi
 
-if [ -z "$SKFDE_LUKS_KEYSLOT" ]; then
-  SKFDE_LUKS_KEYSLOT=$SKFDE_DEFAULT_LUKS_KEYSLOT
-  echo "INFO: LUKS keyslot not selected, using default LUKS keyslot."
+if [ -z "$SKFDE_LUKS_NAME" ]; then
+  printf '%s\n' "ERROR: Please set the new encrypted volume name using '-n' option."
+  exit 1
 fi
 
-printf '%s\n' "INFO: This script will utilize LUKS keyslot '$SKFDE_LUKS_KEYSLOT' on device '$SKFDE_LUKS_DEV'."
+if [ "$SKFDE_LUKS_KEYSLOT" ]; then
+  SKFDE_LUKS_KEYSLOT="--key-slot=$SKFDE_LUKS_KEYSLOT"
+fi
 
 if [ -z "$SKFDE_CHALLENGE" ]; then
   echo "ERROR: solokey challenge is empty. Check the $SKFDE_CONFIG_FILE file."
@@ -85,17 +103,4 @@ if [ -z "$SKFDE_RESPONSE" ]; then
   SKFDE_RESPONSE="$(printf $PIN | fido2luks print-secret $SKFDE_CREDENTIAL \
     --salt string:$SKFDE_CHALLENGE --pin --pin-source /dev/stdin 2>&1)"
   SKFDE_PASSPHRASE="$SKFDE_RESPONSE"
-fi
-
-echo "Please provide the LUKS passphrase for the existing keyslot."
-read -s -p "Enter existing passphrase: " SKFDE_OLD_PASSPHRASE
-
-if [ "$SKFDE_PASSPHRASE" ]; then
-  printf '%s\n' " > Adding solokey LUKS passphrase with cryptsetup..."
-  printf '%s\n' "$SKFDE_OLD_PASSPHRASE" "$SKFDE_PASSPHRASE" "$SKFDE_PASSPHRASE" | cryptsetup --key-slot="$SKFDE_LUKS_KEYSLOT" luksAddKey "$SKFDE_LUKS_DEV" 2>&1
-  printf '%s\n' "   New solokey passphrase successfully added"
-  exit 0
-else
-  echo "ERROR: solokey passphrase is empty"
-  exit 1
 fi
