@@ -87,7 +87,7 @@ if [ -z "$SKFDE_RESPONSE" ]; then
   SKFDE_PASSPHRASE="$SKFDE_RESPONSE"
 fi
 
-echo "Please provide the LUKS passphrase for the existing keyslot."
+echo "Please provide the LUKS passphrase for the existing keyslot"
 read -s -p "Enter existing passphrase: " SKFDE_OLD_PASSPHRASE
 
 if [ "$SKFDE_PASSPHRASE" ]; then
