@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -euxo pipefail
+
+printf '%s\n' " Regenerating the initramfs image"
+mkinitcpio -P
+_res=$?
+if [ "$_res" -eq 0 ]; then
+  printf '%s\n' " Regenerated the initramfs image successfully."
+  exit 0
+fi
