@@ -31,7 +31,7 @@ skfde_open() {
   _skfde_response="$(fido2luks print-secret $SKFDE_CREDENTIAL \
     --salt string:$SKFDE_CHALLENGE --pin --pin-source $SKFDE_PIN_SOURCE 2>&1)"
   _response=$?
-  rm -f $SKFDE_PIN_SOURCE
+  shred -u $SKFDE_PIN_SOURCE
   if [ "$_response" -eq 0 ]; then
     message "Received Response: '$_skfde_response'"
   else
