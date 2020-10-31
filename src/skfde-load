@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
 printf '%s\n' " Regenerating the initramfs image"
 mkinitcpio -P

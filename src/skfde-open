@@ -1,12 +1,14 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
 SKFDE_CONFIG_FILE="/etc/skfde.conf"
+SKFDE_LUKS_KEYSLOT=""
 SKFDE_DEFAULT_LUKS_KEYSLOT="3"
 SKFDE_LUKS_DEV=""
 SKFDE_RESPONSE=""
 SKFDE_PASSPHRASE=""
+SKFDE_TEST_PASSPHRASE=""
 
 if [ -r "$SKFDE_CONFIG_FILE" ]; then
   . "$SKFDE_CONFIG_FILE"
@@ -44,7 +46,6 @@ while getopts ":d:s:n:th" opt; do
       echo " -s <slot>       : select the LUKS keyslot"
       echo " -n <name>       : set the new encrypted volume name"
       echo " -t              : test LUKS passphrase"
-      echo " [ -- --params ] : pass optional cryptsetup luksOpen parameters"
       echo
       exit 0
       ;;
@@ -55,7 +56,6 @@ while getopts ":d:s:n:th" opt; do
       echo " -s <slot>       : select the LUKS keyslot"
       echo " -n <name>       : set the new encrypted volume name"
       echo " -t              : test LUKS passphrase"
-      echo " [ -- --params ] : pass optional cryptsetup luksOpen parameters"
       echo
       exit 1
       ;;
@@ -85,6 +85,8 @@ fi
 
 if [ "$SKFDE_LUKS_KEYSLOT" ]; then
   SKFDE_LUKS_KEYSLOT="--key-slot=$SKFDE_LUKS_KEYSLOT"
+else
+  SKFDE_LUKS_KEYSLOT="--key-slot=$SKFDE_DEFAULT_LUKS_KEYSLOT"
 fi
 
 if [ -z "$SKFDE_CHALLENGE" ]; then
@@ -107,18 +109,22 @@ fi
 
 if [ "$SKFDE_TEST_PASSPHRASE" ]; then
   printf '%s\n' " Passing '$SKFDE_PASSPHRASE' to 'cryptsetup'"
-  printf '%s\n' "$SKFDE_PASSPHRASE" | cryptsetup luksOpen "$SKFDE_TEST_PASSPHRASE" "$SKFDE_LUKS_DEV" "$SKFDE_LUKS_KEYSLOT" "$*" 2>&1
+  printf '%s\n' "$SKFDE_PASSPHRASE" | cryptsetup luksOpen "$SKFDE_TEST_PASSPHRASE" "$SKFDE_LUKS_DEV" "$SKFDE_LUKS_KEYSLOT" 2>&1
   _res=$?
   if [ "$_res" -eq 0 ]; then
     printf '%s\n' " Device successfully opened"
     exit 0
+  else
+    printf '%s\n' " Failed to open the device $SKFDE_LUKS_DEV"
   fi
 else
   printf '%s\n' " Passing '$SKFDE_PASSPHRASE' to 'cryptsetup'"
-  printf '%s\n' "$SKFDE_PASSPHRASE" | cryptsetup luksOpen "$SKFDE_LUKS_DEV" "$SKFDE_LUKS_KEYSLOT" "$*" 2>&1
+  printf '%s\n' "$SKFDE_PASSPHRASE" | cryptsetup luksOpen "$SKFDE_LUKS_DEV" "$SKFDE_LUKS_NAME" "$SKFDE_LUKS_KEYSLOT" 2>&1
   _res=$?
   if [ "$_res" -eq 0 ]; then
     printf '%s\n' " Device successfully opened as /dev/mapper/$SKFDE_LUKS_NAME"
     exit 0
+  else
+    printf '%s\n' " Failed to open the device $SKFDE_LUKS_DEV"
   fi
 fi
