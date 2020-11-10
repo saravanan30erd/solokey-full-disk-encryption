@@ -25,7 +25,8 @@ Table of Contents
    * [Usage](#usage)
       * [Format new LUKS encrypted volume using solokey passphrase](#format-new-luks-encrypted-volume-using-solokey-passphrase)
       * [Unlock LUKS encrypted volume protected by solokey passphrase](#unlock-luks-encrypted-volume-protected-by-solokey-passphrase)
-    
+   * [License](#license)
+   * [Credits](#credits)
 
 # Prerequisites
 
@@ -44,6 +45,10 @@ If you get the error in rust `error: no default toolchain configured`, please ru
 rustup install stable
 rustup default stable
 ```
+
+**Warning: It's recommended to have already working [encrypted system setup](https://wiki.archlinux.org/index.php/Dm-crypt/Encrypting_an_entire_system) with `encrypt` hook and non-solokey passphrase before starting to use `skfde` hook with solokey passphrase to avoid potential misconfigurations.**
+
+Refer [here](https://github.com/saravanan30erd/Arch-Linux-Installation-with-LUKS/blob/master/Notes.md) for Arch Linux installation with LUKS.
 
 # Install
 
@@ -120,8 +125,6 @@ skfde-enroll -d /dev/sda3
 
 ## Enable skfde initramfs hook
 
-**Warning: It's recommended to have already working [encrypted system setup](https://wiki.archlinux.org/index.php/Dm-crypt/Encrypting_an_entire_system) with `encrypt` hook and non-solokey passphrase before starting to use `skfde` hook with solokey passphrase to avoid potential misconfigurations.**
-
 Edit `/etc/mkinitcpio.conf` and add the `skfde` hook before or instead of `encrypt` hook as provided in [example](https://wiki.archlinux.org/index.php/Dm-crypt/System_configuration#Examples). Adding `skfde` hook before `encrypt` hook will allow for a safe fallback in case of skfde misconfiguration. You can remove `encrypt` hook later when you confirm that everything is working correctly.
 
 After making the changes, run the below command to regenerate the initramfs.
@@ -164,3 +167,15 @@ To test only a passphrase for a specific key slot:
 ```
 skfde-open -d /dev/<device> -s <keyslot_number> -t
 ```
+
+# License
+
+Licensed under
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+
+# Credits
+
+- [fido2luks](https://github.com/shimunn/fido2luks)
+- [yubikey-full-disk-encryption](https://github.com/agherzan/yubikey-full-disk-encryption)
