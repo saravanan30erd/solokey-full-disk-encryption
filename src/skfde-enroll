@@ -1,12 +1,13 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
 SKFDE_CONFIG_FILE="/etc/skfde.conf"
 SKFDE_DEFAULT_LUKS_KEYSLOT="3"
 SKFDE_LUKS_DEV=""
 SKFDE_RESPONSE=""
 SKFDE_PASSPHRASE=""
+SKFDE_LUKS_KEYSLOT=""
 
 if [ -r "$SKFDE_CONFIG_FILE" ]; then
   . "$SKFDE_CONFIG_FILE"

@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-printf '%s\n' " Generate the SoloKey credential"
+echo "Generate the SoloKey credential"
 
 read -s -p "Enter the SoloKey PIN: " PIN
 echo "Remember to press the SoloKey button if necessary"
