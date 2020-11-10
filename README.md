@@ -7,6 +7,7 @@ SoloKey uses two inputs, challenge and credential to generate the response. The 
 This was only tested and intended for:
 
 * [Arch Linux](https://www.archlinux.org/) and its derivatives
+* [SoloKey](https://solokeys.com/)
 
 Table of Contents
 =================
@@ -17,18 +18,14 @@ Table of Contents
    * [Install](#install)
       * [From Github using 'make'](#from-github-using-make)
    * [Configure](#configure)
-      * [Configure HMAC-SHA1 Challenge-Response slot in SoloKey](#configure-hmac-sha1-challenge-response-slot-in-SoloKey)
+      * [Create SoloKey credential](#create-solokey-credential)
       * [Edit /etc/skfde.conf file](#edit-etcskfdeconf-file)
-   * [Usage](#usage)
-      * [Format new LUKS encrypted volume using skfde passphrase](#format-new-luks-encrypted-volume-using-skfde-passphrase)
-      * [Enroll skfde passphrase to existing LUKS encrypted volume](#enroll-skfde-passphrase-to-existing-luks-encrypted-volume)
-      * [Enroll new skfde passphrase to existing LUKS encrypted volume protected by old skfde passphrase](#enroll-new-skfde-passphrase-to-existing-luks-encrypted-volume-protected-by-old-skfde-passphrase)
-      * [Unlock LUKS encrypted volume protected by skfde passphrase](#unlock-luks-encrypted-volume-protected-by-skfde-passphrase)
-      * [Kill skfde passphrase for existing LUKS encrypted volume](#kill-skfde-passphrase-for-existing-luks-encrypted-volume)
+      * [Enroll solokey passphrase to existing LUKS encrypted volume](#enroll-solokey-passphrase-to-existing-luks-encrypted-volume)
       * [Enable skfde initramfs hook](#enable-skfde-initramfs-hook)
-      * [Enable NFC support in skfde initramfs hook (experimental)](#enable-nfc-support-in-skfde-initramfs-hook-experimental)
-      * [Enable skfde suspend service (experimental)](#enable-skfde-suspend-service-experimental)
-   * [License](#license)
+   * [Usage](#usage)
+      * [Format new LUKS encrypted volume using solokey passphrase](#format-new-luks-encrypted-volume-using-solokey-passphrase)
+      * [Unlock LUKS encrypted volume protected by solokey passphrase](#unlock-luks-encrypted-volume-protected-by-solokey-passphrase)
+    
 
 # Prerequisites
 
@@ -55,93 +52,111 @@ rustup default stable
 ```
 git clone https://github.com/saravanan30erd/solokey-full-disk-encryption
 cd solokey-full-disk-encryption
-sudo make install
+make install
 ```
 
 # Configure
 
-## Configure HMAC-SHA1 Challenge-Response slot in SoloKey
+## Create SoloKey credential
 
-First of all you need to [setup a configuration slot](https://wiki.archlinux.org/index.php/SoloKey#Setup_the_slot) for *SoloKey HMAC-SHA1 Challenge-Response* mode using a command similar to:
+Plug the solokey and run the below command,
 
 ```
-ykpersonalize -v -2 -ochal-resp -ochal-hmac -ohmac-lt64 -oserial-api-visible -ochal-btn-trig
+skfde-cred
 ```
 
-Above arguments mean:
+You need to pass the solokey pin to authenticate the solokey and then press the solokey button to generate the credential.
 
-* Verbose output (`-v`)
-* Use slot 2 (`-2`)
-* Set Challenge-Response mode (`-ochal-resp`)
-* Generate HMAC-SHA1 challenge responses (`-ochal-hmac`)
-* Calculate HMAC on less than 64 bytes input (`-ohmac-lt64`)
-* Allow SoloKey serial number to be read using an API call (`-oserial-api-visible`)
-* Require touching SoloKey before issue response (`-ochal-btn-trig`) *(optional)*
-
-This command will enable *HMAC-SHA1 Challenge-Response* mode on a chosen slot and write random 20 byte length secret key to your SoloKey which will be used for creating skfde passphrases.
-
-**Warning: choosing SoloKey slot already configured for *HMAC-SHA1 Challenge-Response* mode will overwrite secret key with the new one which means skfde passphrases created with the old key will be unrecoverable.**
-
-You may instead enable *HMAC-SHA1 Challenge-Response* mode using graphical interface through [SoloKey-personalization-gui](https://www.archlinux.org/packages/community/x86_64/SoloKey-personalization-gui/) package. It allows for customization of the secret key, creation of secret key backup and writing the same secret key to multpile SoloKeys which allows for using them interchangeably for creating same skfde passphrases.
+```
+~]# skfde-cred
+Generate the SoloKey credential
+Enter the SoloKey PIN: <pass pin>
+Remember to press the SoloKey button if necessary
+SoloKey credential : <credential>
+```
 
 ## Edit /etc/skfde.conf file
 
-Open the [/etc/skfde.conf](https://github.com/agherzan/SoloKey-full-disk-encryption/blob/master/src/skfde.conf) file and adjust it for your needs. Alternatively to setting `skfde_DISK_UUID` and `skfde_LUKS_NAME`, you can use `cryptdevice` kernel parameter. The [syntax](https://wiki.archlinux.org/index.php/Dm-crypt/Device_encryption#Configuring_the_kernel_parameters) is compatible with Arch's `encrypt` hook. After making your changes [regenerate initramfs](https://wiki.archlinux.org/index.php/Mkinitcpio#Image_creation_and_activation):
+Open the /etc/skfde.conf file and adjust it for your needs.
 
+Example:
+
+Provide the LUKS encrypted device,
 ```
-sudo mkinitcpio -P
-```
-
-
-# Usage
-You can list existing LUKS key slots with `cryptsetup luksDump /dev/<device>`.
-
-## Format new LUKS encrypted volume using skfde passphrase
-
-To format new *LUKS* encrypted volume, you can use [skfde-format](https://github.com/agherzan/SoloKey-full-disk-encryption/blob/master/src/skfde-format) script which is wrapper over `cryptsetup luksFormat` command:
-
-```
-skfde-format --cipher aes-xts-plain64 --key-size 512 --hash sha512 /dev/<device>
+SKFDE_LUKS_DEV="/dev/sda3"
 ```
 
-## Enroll skfde passphrase to existing LUKS encrypted volume
+LUKS encrypted volume name after unlocking,
+```
+SKFDE_LUKS_NAME="luks_root"
+```
 
-To enroll new skfde passphrase to existing *LUKS* encrypted volume you can use [skfde-enroll](https://github.com/agherzan/SoloKey-full-disk-encryption/blob/master/src/skfde-enroll) script, see `skfde-enroll -h` for help:
+Challenge to generate solokey response, it can be text such as alphanumeric.
+```
+SKFDE_CHALLENGE="Bugn05DioqvVzQyFYhwD9EhRejXXAci"
+```
+
+Credential used to generate solokey response, use the credential created using `skfde-cred`.
+```
+SKFDE_CREDENTIAL="<credential>"
+```
+
+## Enroll solokey passphrase to existing LUKS encrypted volume
+
+To enroll new solokey passphrase to existing *LUKS* encrypted volume you can use `skfde-enroll`,
+see `skfde-enroll -h` for help:
 
 ```
 skfde-enroll -d /dev/<device> -s <keyslot_number>
 ```
 
-**Warning: having a weaker non-skfde passphrase(s) on the same *LUKS* encrypted volume undermines the skfde passphrase value as potential attacker will always try to break the weaker passphrase. Make sure the other  non-skfde passphrases are similarly strong or remove them.**
-
-## Enroll new skfde passphrase to existing LUKS encrypted volume protected by old skfde passphrase
-
-To enroll new skfde passphrase to existing *LUKS* encrypted volume protected by old skfde passphrase you can use [skfde-enroll](https://github.com/agherzan/SoloKey-full-disk-encryption/blob/master/src/skfde-enroll) script, see `skfde-enroll -h` for help:
+By default, it uses `keyslot 3` if you don't pass `-s <keyslot_number>`.
 
 ```
-skfde-enroll -d /dev/<device> -s <keyslot_number> -o
+skfde-enroll -d /dev/sda3
 ```
 
-## Unlock LUKS encrypted volume protected by skfde passphrase
+**Warning: having a weaker non-solokey passphrase(s) on the same *LUKS* encrypted volume undermines the solokey passphrase value as potential attacker will always try to break the weaker passphrase. Make sure the other non-solokey passphrases are similarly strong or remove them.**
 
-To unlock *LUKS* encrypted volume on a running system, you can use [skfde-open](https://github.com/agherzan/SoloKey-full-disk-encryption/blob/master/src/skfde-open) script, see `skfde-open -h` for help.
+## Enable skfde initramfs hook
 
-As unprivileged user using udisksctl (recommended):
+**Warning: It's recommended to have already working [encrypted system setup](https://wiki.archlinux.org/index.php/Dm-crypt/Encrypting_an_entire_system) with `encrypt` hook and non-solokey passphrase before starting to use `skfde` hook with solokey passphrase to avoid potential misconfigurations.**
 
-```
-skfde-open -d /dev/<device>
-```
+Edit `/etc/mkinitcpio.conf` and add the `skfde` hook before or instead of `encrypt` hook as provided in [example](https://wiki.archlinux.org/index.php/Dm-crypt/System_configuration#Examples). Adding `skfde` hook before `encrypt` hook will allow for a safe fallback in case of skfde misconfiguration. You can remove `encrypt` hook later when you confirm that everything is working correctly.
 
-As root using cryptsetup (when [udisks2](https://www.archlinux.org/packages/extra/x86_64/udisks2/) or [expect](https://www.archlinux.org/packages/extra/x86_64/expect/) aren't available):
+After making the changes, run the below command to regenerate the initramfs.
 
 ```
-skfde-open -d /dev/<device> -n <volume_name>
+skfde-load
 ```
 
-To print only the skfde passphrase to the console without unlocking any volumes:
+Reboot and test your configuration.
+
+During the boot process, it will pause and you need to pass the solokey pin to authenticate the solokey.
+Then press the solokey button.
+
+# Usage
+
+## Format new LUKS encrypted volume using solokey passphrase
+
+To format new *LUKS* encrypted volume, you can use `skfde-format` which is wrapper over `cryptsetup luksFormat` command:
 
 ```
-skfde-open -p
+skfde-format --cipher aes-xts-plain64 --key-size 512 --hash sha512 /dev/<device>
+```
+
+## Unlock LUKS encrypted volume protected by solokey passphrase
+
+To unlock *LUKS* encrypted volume on a running system, you can use `skfde-open` script,
+see `skfde-open -h` for help.
+
+By default, it uses `keyslot 3` if you don't pass `-s <keyslot_number>`.
+```
+skfde-open -d /dev/<device> -n <LUKS volume name>
+```
+
+```
+skfde-open -d /dev/sda3 -n luks_vol1
 ```
 
 To test only a passphrase for a specific key slot:
@@ -149,29 +164,3 @@ To test only a passphrase for a specific key slot:
 ```
 skfde-open -d /dev/<device> -s <keyslot_number> -t
 ```
-
-To use optional parameters, example, use an external luks header:
-
-```
-skfde-open -d /dev/<device> -- --header /mnt/luks-header.img
-```
-
-## Kill skfde passphrase for existing LUKS encrypted volume
-
-To kill a skfde passphrase for existing *LUKS* encrypted volume you can use [skfde-enroll](https://github.com/agherzan/SoloKey-full-disk-encryption/blob/master/src/skfde-enroll) script, see `skfde-enroll -h` for help:
-
-```
-skfde-enroll -d /dev/<device> -s <keyslot_number> -k
-```
-
-## Enable skfde initramfs hook
-
-**Warning: It's recommended to have already working [encrypted system setup](https://wiki.archlinux.org/index.php/Dm-crypt/Encrypting_an_entire_system) with `encrypt` hook and non-skfde passphrase before starting to use `skfde` hook with skfde passphrase to avoid potential misconfigurations.**
-
-Edit `/etc/mkinitcpio.conf` and add the `skfde` hook before or instead of `encrypt` hook as provided in [example](https://wiki.archlinux.org/index.php/Dm-crypt/System_configuration#Examples). Adding `skfde` hook before `encrypt` hook will allow for a safe fallback in case of skfde misconfiguration. You can remove `encrypt` hook later when you confim that everything is working correctly. After making your changes [regenerate initramfs](https://wiki.archlinux.org/index.php/Mkinitcpio#Image_creation_and_activation):
-
-```
-sudo mkinitcpio -P
-```
-
-Reboot and test your configuration.
