@@ -48,7 +48,7 @@ rustup default stable
 
 **Warning: It's recommended to have already working [encrypted system setup](https://wiki.archlinux.org/index.php/Dm-crypt/Encrypting_an_entire_system) with `encrypt` hook and non-solokey passphrase before starting to use `skfde` hook with solokey passphrase to avoid potential misconfigurations.**
 
-Refer [here](https://github.com/saravanan30erd/Arch-Linux-Installation-with-LUKS/blob/master/Notes.md) for Arch Linux installation with LUKS.
+Refer [here](https://github.com/saravanan30erd/Arch-Linux-Installation-with-LUKS/blob/master/Luks-encryption-root-partition.md) for Arch Linux installation with LUKS.
 
 # Install
 
