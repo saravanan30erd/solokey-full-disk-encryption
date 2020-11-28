@@ -9,18 +9,15 @@ SKFDE_RESPONSE=""
 SKFDE_PASSPHRASE=""
 SKFDE_LUKS_KEYSLOT=""
 
-if [ -r "$SKFDE_CONFIG_FILE" ]; then
-  . "$SKFDE_CONFIG_FILE"
-else
-  echo "Failed to read the SKFDE configuration file '$SKFDE_CONFIG_FILE'"
-  exit 1
-fi
-
-while getopts ":d:s:h" opt; do
+while getopts ":d:s:c:h" opt; do
   case "$opt" in
     d)
       SKFDE_LUKS_DEV="$OPTARG"
       printf '%s\n' "INFO: Setting device to '$OPTARG'."
+      ;;
+    c)
+      SKFDE_CONFIG_FILE="$OPTARG"
+      printf '%s\n' "INFO: Setting config file to '$OPTARG'."
       ;;
     s)
       if [ "$OPTARG" -gt -8 ] && [ "$OPTARG" -lt 8 ]; then
@@ -35,6 +32,7 @@ while getopts ":d:s:h" opt; do
       echo
       echo " -d <device>   : select an existing device"
       echo " -s <slot>     : select the LUKS keyslot"
+      echo " -c <file>     : select the skfde config file"
       exit 0
       ;;
     \?)
@@ -42,10 +40,18 @@ while getopts ":d:s:h" opt; do
       echo
       echo " -d <device>   : select an existing device"
       echo " -s <slot>     : select the LUKS keyslot"
+      echo " -c <file>     : select the skfde config file"
       exit 1
       ;;
   esac
 done
+
+if [ -r "$SKFDE_CONFIG_FILE" ]; then
+  . "$SKFDE_CONFIG_FILE"
+else
+  echo "Failed to read the SKFDE configuration file '$SKFDE_CONFIG_FILE'"
+  exit 1
+fi
 
 if [ -z "$SKFDE_LUKS_DEV" ]; then
   echo "ERROR: Device not selected. Please select an existing device using '-d' option."
