@@ -27,18 +27,18 @@ skfde_open() {
   read -s -p 'Enter the SoloKey PIN: ' PIN
 
   echo -n $PIN > $SKFDE_PIN_SOURCE
-  message "Generate the solokey response"
+  message "Generate the SoloKey response"
   _skfde_response="$(fido2luks print-secret $SKFDE_CREDENTIAL \
     --salt string:$SKFDE_CHALLENGE --pin --pin-source $SKFDE_PIN_SOURCE 2>&1)"
   _response=$?
   shred -u $SKFDE_PIN_SOURCE
   if [ "$_response" -eq 0 ]; then
-    message "Received Response: '$_skfde_response'"
+    message "Received SoloKey Response"
   else
     message "SoloKey Challenge-Response failed"
   fi
 
-  message "Passing '$_skfde_response' to cryptsetup"
+  message "Passing SoloKey response to cryptsetup"
   _tmp="$(printf %s "$_skfde_response" | cryptsetup luksOpen \
     --key-slot=$SKFDE_LUKS_KEYSLOT \
     $SKFDE_LUKS_DEV $SKFDE_LUKS_NAME 2>&1)"

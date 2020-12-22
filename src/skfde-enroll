@@ -12,7 +12,7 @@ SKFDE_LUKS_KEYSLOT=""
 if [ -r "$SKFDE_CONFIG_FILE" ]; then
   . "$SKFDE_CONFIG_FILE"
 else
-  echo "Failed to read the SKFDE configuration file '$SKFDE_CONFIG_FILE'"
+  echo "Failed to read the default SKFDE configuration file '$SKFDE_CONFIG_FILE'"
   exit 1
 fi
 
