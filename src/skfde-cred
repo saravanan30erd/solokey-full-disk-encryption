@@ -5,7 +5,7 @@ set -euo pipefail
 echo "Generate the SoloKey credential"
 
 read -s -p "Enter the SoloKey PIN: " PIN
-echo "Remember to press the SoloKey button if necessary"
+echo -e "\nRemember to press the SoloKey button if necessary"
 
 CREDENTIAL="$(printf $PIN | fido2luks credential \
   --pin --pin-source /dev/stdin 2>&1)"

@@ -89,7 +89,7 @@ fi
 
 if [ -z "$SKFDE_RESPONSE" ]; then
   read -s -p "Enter the SoloKey PIN: " PIN
-  echo "Remember to press the SoloKey button if necessary"
+  echo -e "\nRemember to press the SoloKey button if necessary"
   SKFDE_RESPONSE="$(printf $PIN | fido2luks print-secret $SKFDE_CREDENTIAL \
     --salt string:$SKFDE_CHALLENGE --pin --pin-source /dev/stdin 2>&1)"
   SKFDE_PASSPHRASE="$SKFDE_RESPONSE"
