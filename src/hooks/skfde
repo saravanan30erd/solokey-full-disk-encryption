@@ -14,6 +14,7 @@ message() {
 
 skfde_open() {
 
+  sleep 2
   # check if SoloKey authenticator is connected
   _key_connected="$(fido2luks connected 2>&1)"
   _connected=$?
