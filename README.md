@@ -1,8 +1,9 @@
 # SoloKey Full Disk Encryption
 
-This project leverages a [SoloKey](https://wiki.archlinux.org/index.php/Solo) [HMAC Challenge-Response](https://github.com/solokeys/solo-python#challenge-response) mode for creating strong [LUKS](https://gitlab.com/cryptsetup/cryptsetup) encrypted volume passphrases.  You can encrypt the root OS partition and use solokey to unlock this encrypted partition in initramfs stage during boot process as well as other partitions on running system.
+This project leverages FIDO2 hmac-secret extension for creating strong [LUKS](https://gitlab.com/cryptsetup/cryptsetup) encrypted volume passphrases.  You can encrypt the root OS partition and use solokey to unlock this encrypted partition in initramfs stage during boot process as well as other partitions on running system.
 
 SoloKey uses two inputs, challenge and credential to generate the response. The response will be used as your LUKS encrypted volume passphrase.
+Apart from SoloKey, other keys are also supported as well.
 
 This was only tested and intended for:
 
