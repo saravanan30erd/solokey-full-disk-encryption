@@ -5,19 +5,27 @@ SKFDE_CONFIG_FILE="/etc/skfde.conf"
 SKFDE_SLEEP_AFTER_SUCCESSFUL_CRYPTSETUP="5"
 SKFDE_CRYPTSETUP_RETRY="3"
 SKFDE_PIN_SOURCE="pin.txt"
+SKFDE_TIMEOUT="30"
 
 message() {
   echo "$@" >&2
   return 0
 }
 
-skfde_open() {
-
-  sleep 2
-  # check if SoloKey authenticator is connected
+key_connected() {
   _key_connected="$(fido2luks connected 2>&1)"
-  _connected=$?
-  if [ "$_connected" -eq 0 ]; then
+  return $?
+}
+
+skfde_open() {
+  message "Waiting up to $SKFDE_TIMEOUT seconds for SoloKey..."
+  n=1
+  until key_connected || [ "$n" -gt $SKFDE_TIMEOUT ];do
+    n=$(( n + 1 ))
+    sleep 1
+  done
+  # check if SoloKey authenticator is connected
+  if key_connected; then
     message "SoloKey Found"
   else
     message "SoloKey Not Found"
